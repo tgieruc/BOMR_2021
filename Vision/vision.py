@@ -26,9 +26,9 @@ class Goal:
 
 class Vision():
     def __init__(self):
-        self.actual_frame = cv2.imread('example.png', cv2.IMREAD_COLOR)
+        self.actual_frame = cv2.imread('../Vision/example.png', cv2.IMREAD_COLOR)
         self.blurred_frame = cv2.medianBlur(self.actual_frame, 9)
-        self.gray_frame = cv2.imread('example.png', cv2.IMREAD_GRAYSCALE)
+        self.gray_frame = cv2.imread('../Vision/example.png', cv2.IMREAD_GRAYSCALE)
         self.obstacles = Obstacles()
         self.robot = Robot()
         self.goal = Goal()
