@@ -7,7 +7,7 @@ from copy import deepcopy
 @dataclass
 class Obstacles:
     contour: list = None
-    expanded_contour: np.ndarray = None
+    expanded_contour: list = None
     center: np.ndarray = None
 
 
