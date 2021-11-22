@@ -3,17 +3,20 @@ import numpy as np
 from dataclasses import dataclass
 from copy import deepcopy
 
+
 @dataclass
 class Obstacles:
-    contour: list= None
-    expanded_contour: np.ndarray = None
+    contour: list = None
+    expanded_contour: list = None
     center: np.ndarray = None
+
 
 @dataclass
 class Robot:
     contour: list = None
     center: np.ndarray = None
     length: float = 60
+
 
 @dataclass
 class Goal:
@@ -23,9 +26,9 @@ class Goal:
 
 class Vision():
     def __init__(self):
-        self.actual_frame = cv2.imread('example.png', cv2.IMREAD_COLOR)
+        self.actual_frame = cv2.imread('../Vision/example.png', cv2.IMREAD_COLOR)
         self.blurred_frame = cv2.medianBlur(self.actual_frame, 9)
-        self.gray_frame = cv2.imread('example.png', cv2.IMREAD_GRAYSCALE)
+        self.gray_frame = cv2.imread('../Vision/example.png', cv2.IMREAD_GRAYSCALE)
         self.obstacles = Obstacles()
         self.robot = Robot()
         self.goal = Goal()
@@ -59,11 +62,12 @@ class Vision():
         Output:
         - the image with the mask
         """
+
         def draw_dot(img):
             for cnt in self.obstacles.expanded_contour:
                 cnt = cnt.astype(int)
                 for dot in cnt:
-                    img = cv2.circle(img, dot.flatten(), 5, (0,0,255), -1)
+                    img = cv2.circle(img, dot.flatten(), 5, (0, 0, 255), -1)
             return img
 
         return draw_dot(create_mask(self.obstacles.contour, img, [0, 0, 255]))
@@ -81,6 +85,7 @@ class Vision():
                 exp_cnt[i][j] = corner - self.robot.length / 2 * bissec / np.linalg.norm(bissec)
 
         return exp_cnt
+
     def update_robot(self):
         thresh = 210
         white_coeffs = np.array([0.114, 0.587, 0.229])
@@ -119,6 +124,7 @@ class Vision():
 
         self.goal.contour = polygon_detection(self.actual_frame, aim.astype(np.uint8), 20, cond_aim)
         self.goal.center = self.get_centroid(self.goal.contour)
+
     def create_mask_aim(self, img):
         """
         This method creates a mask of the aim
@@ -150,11 +156,11 @@ class Vision():
         Output:
         - the centroid of all the contours
         """
-        centroid = np.zeros((len(contour_array),2))
+        centroid = np.zeros((len(contour_array), 2))
         for i, cnt in enumerate(contour_array):
             M = cv2.moments(cnt)
-            centroid[i, 0] = int(M['m10']/M['m00'])
-            centroid[i, 1] = int(M['m01']/M['m00'])
+            centroid[i, 0] = int(M['m10'] / M['m00'])
+            centroid[i, 1] = int(M['m01'] / M['m00'])
         return centroid
 
 
@@ -217,6 +223,6 @@ def polygon_detection(img_color, img_grayscale, area_min, condition):
             if condition(img_color, img_grayscale, cnt):
                 approx = cv2.approxPolyDP(cnt,
                                           0.02 * cv2.arcLength(cnt, True), True)
-                approx_array.append(approx)
+                approx_array.append(approx.reshape(-1,2))
     # Showing the image along with outlined arrow.
     return approx_array
