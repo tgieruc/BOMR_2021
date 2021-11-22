@@ -92,6 +92,7 @@ class Vision():
             return 1
 
         self.robot.contour = polygon_detection(self.actual_frame, white.astype(np.uint8), 20, cond_robot)
+        self.robot.center = self.get_centroid(self.robot.contour)
 
     def create_mask_robot(self, img):
         """
@@ -117,7 +118,7 @@ class Vision():
             return 1
 
         self.goal.contour = polygon_detection(self.actual_frame, aim.astype(np.uint8), 20, cond_aim)
-
+        self.goal.center = self.get_centroid(self.goal.contour)
     def create_mask_aim(self, img):
         """
         This method creates a mask of the aim
