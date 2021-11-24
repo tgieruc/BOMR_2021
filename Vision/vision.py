@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from dataclasses import dataclass
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -9,29 +10,52 @@ class Obstacles:
     contour: list = None
     expanded_contour: list = None
     center: np.ndarray = None
-
+    color : np.ndarray = None
 
 @dataclass
 class Robot:
     contour: list = None
     center: np.ndarray = None
     length: float = 60
+    color : np.ndarray = None
+
 
 
 @dataclass
 class Goal:
     contour: list = None
     center: np.ndarray = None
+    color : np.ndarray = None
+
 
 
 class Vision():
     def __init__(self):
         self.actual_frame = cv2.imread('../Vision/example.png', cv2.IMREAD_COLOR)
+        self.actual_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_BGR2RGB)
         self.blurred_frame = cv2.medianBlur(self.actual_frame, 9)
         self.gray_frame = cv2.imread('../Vision/example.png', cv2.IMREAD_GRAYSCALE)
         self.obstacles = Obstacles()
         self.robot = Robot()
         self.goal = Goal()
+        self.vc = None
+        self.obstacles.color = np.array([31, 33, 28])
+        self.robot.color   = np.array([254, 247, 254])
+        self.goal.color  =np.array([251, 240, 136])
+
+    def disconnect_camera(self):
+        self.vc.release()
+
+    def connect_camera(self):
+        self.vc = cv2.VideoCapture(0)
+
+    def update_frame(self):
+        captured = False
+        while not captured:
+            captured, self.actual_frame = self.vc.read()
+
+        self.blurred_frame = cv2.medianBlur(self.actual_frame, 9)
+        self.gray_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_RGB2GRAY)
 
     def update(self):
         """
@@ -42,13 +66,8 @@ class Vision():
         self.update_aim()
 
     def update_obstacles(self):
-        def cond_obstacles(img_color, img_grayscale, cnt):
-            mask = np.zeros(img_grayscale.shape, np.uint8)
-            cv2.drawContours(mask, cnt, -1, 255, -1)
-            contour_mean = cv2.mean(img_color, mask)
-            return np.sum(contour_mean) / 3 > 130
-
-        self.obstacles.contour = polygon_detection(self.actual_frame, self.gray_frame, 400, cond_obstacles)
+        obstacle_thresh = color_compare(self.actual_frame, self.obstacles.color, 40)
+        self.obstacles.contour = polygon_detection(obstacle_thresh.astype(np.uint8), 400, 0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1] )
         self.obstacles.center = self.get_centroid(self.obstacles.contour)
         self.obstacles.expanded_contour = self.expand_contours()
 
@@ -67,10 +86,10 @@ class Vision():
             for cnt in self.obstacles.expanded_contour:
                 cnt = cnt.astype(int)
                 for dot in cnt:
-                    img = cv2.circle(img, dot.flatten(), 5, (0, 0, 255), -1)
+                    img = cv2.circle(img, dot.flatten(), 5, (255, 0, 0), -1)
             return img
 
-        return draw_dot(create_mask(self.obstacles.contour, img, [0, 0, 255]))
+        return draw_dot(create_mask(self.obstacles.contour, img, [255, 0, 0]))
 
     def expand_contours(self):
         """
@@ -87,16 +106,8 @@ class Vision():
         return exp_cnt
 
     def update_robot(self):
-        thresh = 210
-        white_coeffs = np.array([0.114, 0.587, 0.229])
-        white = (self.blurred_frame.astype(float) * white_coeffs).sum(axis=-1)
-        white[white > thresh] = 255
-        white[white <= thresh] = 0
-
-        def cond_robot(img_color, img_grayscale, cnt):
-            return 1
-
-        self.robot.contour = polygon_detection(self.actual_frame, white.astype(np.uint8), 20, cond_robot)
+        robot_thresh = color_compare(self.blurred_frame, self.robot.color, 40)
+        self.robot.contour = polygon_detection(robot_thresh.astype(np.uint8), 400 , 0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1])
         self.robot.center = self.get_centroid(self.robot.contour)
 
     def create_mask_robot(self, img):
@@ -109,20 +120,11 @@ class Vision():
         Output:
         - the image with the mask
         """
-        return create_mask(self.robot.contour, img, [255, 0, 0])
+        return create_mask(self.robot.contour, img, [0, 0, 255])
 
     def update_aim(self):
-        thresh = 200
-        aim_coeffs = np.array([-0.9, 0.8, 0.8])
-        aim = (self.blurred_frame.astype(float) * aim_coeffs).sum(axis=-1)
-
-        aim[aim > thresh] = 255
-        aim[aim <= thresh] = 0
-
-        def cond_aim(img_color, img_grayscale, cnt):
-            return 1
-
-        self.goal.contour = polygon_detection(self.actual_frame, aim.astype(np.uint8), 20, cond_aim)
+        goal_thresh = color_compare(self.blurred_frame, self.goal.color, 40)
+        self.goal.contour = polygon_detection(goal_thresh.astype(np.uint8), 400, 0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1])
         self.goal.center = self.get_centroid(self.goal.contour)
 
     def create_mask_aim(self, img):
@@ -159,6 +161,8 @@ class Vision():
         centroid = np.zeros((len(contour_array), 2))
         for i, cnt in enumerate(contour_array):
             M = cv2.moments(cnt)
+            if  M['m00']  == 0:
+                print("test")
             centroid[i, 0] = int(M['m10'] / M['m00'])
             centroid[i, 1] = int(M['m01'] / M['m00'])
         return centroid
@@ -177,11 +181,11 @@ def create_mask(contours, img_mask, color):
     - the image with the mask
     """
     for cnt in contours:
-        cv2.drawContours(img_mask, [cnt], 0, (color[2], color[1], color[0]), 7)
-    return cv2.cvtColor(img_mask, cv2.COLOR_BGR2RGB)
+        cv2.drawContours(img_mask, [cnt], 0, (color[0], color[1], color[2]), 7)
+    return img_mask
 
 
-def polygon_detection(img_color, img_grayscale, area_min, condition):
+def polygon_detection(threshold, min_area, max_area):
     """
     This method creates a contours array
 
@@ -202,8 +206,8 @@ def polygon_detection(img_color, img_grayscale, area_min, condition):
     """
     # Converting image to a binary image
     # (black and white only image).
-    _, threshold = cv2.threshold(img_grayscale, 110, 255,
-                                 cv2.THRESH_BINARY)
+    # _, threshold = cv2.threshold(img_grayscale, 110, 255,
+    #                              cv2.THRESH_BINARY)
 
     # Detecting shapes in image by selecting region
     # with same colors or intensity.
@@ -213,16 +217,16 @@ def polygon_detection(img_color, img_grayscale, area_min, condition):
     # Searching through every region selected to
     # find the required polygon.
     for cnt in contours:
-        area = cv2.contourArea(cnt)
+        approx = cv2.approxPolyDP(cnt, 0.03 * cv2.arcLength(cnt, True), True)
+        area = cv2.contourArea(approx)
         # Shortlisting the regions based on there area.
-        if area > area_min:
-            mask = np.zeros(img_grayscale.shape, np.uint8)
-            cv2.drawContours(mask, cnt, -1, 255, -1)
-            contour_mean = cv2.mean(img_color, mask)
-
-            if condition(img_color, img_grayscale, cnt):
-                approx = cv2.approxPolyDP(cnt,
-                                          0.02 * cv2.arcLength(cnt, True), True)
-                approx_array.append(approx.reshape(-1,2))
+        if min_area < area < max_area:
+            approx_array.append(approx.reshape(-1, 2))
     # Showing the image along with outlined arrow.
     return approx_array
+
+def color_compare(img, color, threshold):
+    img_color = abs(img - color)
+    img_gray = np.mean(img_color, axis=2)
+    _, img_bin =  cv2.threshold(img_gray, threshold, 10, cv2.THRESH_BINARY)
+    return img_bin
