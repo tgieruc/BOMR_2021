@@ -8,7 +8,7 @@ vision = Vision()
 vision.update()
 
 
-plt.imshow(vision.create_mask_aim(vision.actual_frame.copy()))
+plt.imshow(vision.create_mask_goal(vision.actual_frame.copy()))
 
 
 plt.imshow(vision.create_mask_obstacles(vision.actual_frame.copy()))

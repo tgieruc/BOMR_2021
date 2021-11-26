@@ -43,12 +43,18 @@ class Vision():
         self.obstacles.color = np.array([31, 33, 28])
         self.robot.color = np.array([254, 247, 254])
         self.goal.color = np.array([170, 163, 81])
+        self.status = None
+
+    def set_colors(self, color_obstacles, color_robot, color_goal):
+        self.obstacles.color = color_obstacles
+        self.robot.color = color_robot
+        self.goal.color  = color_goal
 
     def disconnect_camera(self):
         self.vc.release()
 
-    def connect_camera(self):
-        self.vc = cv2.VideoCapture(0)
+    def connect_camera(self, camera_number):
+        self.vc = cv2.VideoCapture(camera_number)
 
     def update_frame(self):
         captured = False
@@ -64,10 +70,10 @@ class Vision():
         """
         self.update_obstacles()
         self.update_robot()
-        self.update_aim()
+        self.update_goal()
 
     def update_obstacles(self):
-        obstacle_thresh = color_compare(self.actual_frame, self.obstacles.color, 40)
+        obstacle_thresh = color_compare(self.actual_frame, self.obstacles.color, 20)
         self.obstacles.contour = polygon_detection(obstacle_thresh.astype(np.uint8), 400,
                                                    0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1])
         self.obstacles.center = self.get_centroid(self.obstacles.contour)
@@ -108,16 +114,19 @@ class Vision():
         return exp_cnt
 
     def update_robot(self):
-        robot_thresh = color_compare(self.blurred_frame, self.robot.color, 40)
+        robot_thresh = color_compare(self.blurred_frame, self.robot.color, 20)
         self.robot.contour = self.get_biggest_area_cnt(polygon_detection(robot_thresh.astype(np.uint8), 400,
                                                0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1]))
         self.robot.center = self.get_centroid(self.robot.contour)
 
         red_point_tresh = color_compare(self.blurred_frame, np.array([255, 0, 0]), 40)
         red_point_cnt = polygon_detection(red_point_tresh.astype(np.uint8), 5, 2000)
-        self.robot.red_point = self.get_centroid(red_point_cnt)
-        self.robot.orientation = np.arctan2(self.robot.red_point[0, 1] - self.robot.center[0, 1],
+
+        if (red_point_cnt != []) & (self.robot.center.size != 0):
+            self.robot.red_point = self.get_centroid(red_point_cnt)
+            self.robot.orientation = np.arctan2(self.robot.red_point[0, 1] - self.robot.center[0, 1],
                                             self.robot.red_point[0, 0] - self.robot.center[0, 0])
+
 
     def create_mask_robot(self, img):
         """
@@ -129,18 +138,19 @@ class Vision():
         Output:
         - the image with the mask
         """
-        center = self.robot.center.astype(int)
-        red_pt = self.robot.red_point.astype(int)
-        orientation = cv2.line(img, (center[0, 0], center[0, 1]), (red_pt[0, 0], red_pt[0, 1]), (0, 0, 255), 6)
-        return create_mask(self.robot.contour, orientation, [0, 0, 255])
+        if (self.robot.red_point.size != 0) & (self.robot.center.size != 0):
+            center = self.robot.center.astype(int)
+            red_pt = self.robot.red_point.astype(int)
+            img = cv2.line(img, (center[0, 0], center[0, 1]), (red_pt[0, 0], red_pt[0, 1]), (0, 0, 255), 6)
+        return create_mask(self.robot.contour, img, [0, 0, 255])
 
-    def update_aim(self):
-        goal_thresh = color_compare(self.blurred_frame, self.goal.color, 40)
+    def update_goal(self):
+        goal_thresh = color_compare(self.blurred_frame, self.goal.color, 20)
         self.goal.contour = self.get_biggest_area_cnt(polygon_detection(goal_thresh.astype(np.uint8), 400,
                                               0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1]))
         self.goal.center = self.get_centroid(self.goal.contour)
 
-    def create_mask_aim(self, img):
+    def create_mask_goal(self, img):
         """
         This method creates a mask of the aim
 
@@ -159,7 +169,7 @@ class Vision():
         Output:
         - the image with the mask
         """
-        return self.create_mask_obstacles(self.create_mask_robot(self.create_mask_aim(self.actual_frame.copy())))
+        return self.create_mask_obstacles(self.create_mask_robot(self.create_mask_goal(self.actual_frame.copy())))
 
     def get_centroid(self, contour_array):
         """
@@ -180,6 +190,8 @@ class Vision():
 
     def get_biggest_area_cnt(self, contours):
         area = []
+        if contours == []:
+            return []
         for cnt in contours:
             area_tmp = cv2.contourArea(cnt)
             area.append(area_tmp)
