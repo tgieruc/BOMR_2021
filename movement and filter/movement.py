@@ -1,7 +1,6 @@
 # %%run_python
 import numpy as np
 
-
 def move(pos_prev, position_goal):
     wheel_radius = 44       # mm
     length_robot = 110      # mm
@@ -24,11 +23,24 @@ def move(pos_prev, position_goal):
     speed_right = (v - w * length_robot) / wheel_radius
     return np.array(speed_right, speed_left)
 
-for i in len(resultat_coor):
+i =1
+timer_period[0] = 100
+@onevent
+def timer0():
+    global motor_right_target, motor_left_target, i
     pos_goal = resultat_coor[i]
     pos =  # prendre la valeur de Kalman
-    while pos != pos_goal:
-        pos =  # prendre la valeur de Kalman
-        speed = move(pos, pos_goal)
-        motor_right_target = speed[1]
-        motor_left_target = speed[2]
+    if pos == pos_goal:
+        i = i+1
+    speed = move(pos, pos_goal)
+    motor_right_target = speed[1]
+    motor_left_target = speed[2]
+
+# for i in len(resultat_coor):
+#     pos_goal = resultat_coor[i]
+#     pos =  # prendre la valeur de Kalman
+#     while pos != pos_goal:
+#         pos =  # prendre la valeur de Kalman
+#         speed = move(pos, pos_goal)
+#         motor_right_target = speed[1]
+#         motor_left_target = speed[2]
