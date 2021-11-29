@@ -33,8 +33,6 @@ vision.update()
 
 image = vision.actual_frame.copy()
 
-plt.imshow(vision.create_mask_aim(vision.actual_frame.copy()))
-
 
 plt.imshow(vision.create_mask_obstacles(vision.actual_frame.copy()))
 
@@ -49,9 +47,10 @@ plt.imshow(vision.create_full_mask())
 
 obstacle = vision.obstacles.expanded_contour
 robot_start = np.array([int(vision.robot.center[0][0]), int(vision.robot.center[0][1])])
-# robot_start = np.array([200, 600])
+# robot_start = np.array([100, 350])
 print(robot_start)
 robot_goal = np.array([int(vision.goal.center[0][0]),int(vision.goal.center[0][1])])
+# robot_goal = np.array([500,300])
 print(robot_goal)
 # print(obstacle[0][0,0])
 
@@ -200,6 +199,37 @@ for i in range(len(obstacle)): # parcours tous les obstacles
 
             start_dijk.append(j * len(obstacle) + i)
             goal_dijk.append('G')
+
+
+ # lien robot goal
+
+        start_tmp, goal_tmp = map(Point, [robot_start, robot_goal])
+        chemin = Line(start_tmp, goal_tmp)
+
+        maxIntersection = 0
+        intersection = 0
+
+        for m in range(len(obstacle)):
+            isIntersection = poly[m].intersection(chemin)
+
+            intersection = len(isIntersection)
+
+            for n in range(len(isIntersection)):
+                if (start_tmp[0] > isIntersection[n][0] < goal_tmp[0] or start_tmp[0] < isIntersection[n][0] >
+                        goal_tmp[0]):
+                    intersection = intersection - 1
+
+            if intersection > maxIntersection:
+                maxIntersection = intersection
+
+        if maxIntersection == 0:
+            start_chemin.append(robot_start)
+            goal_chemin.append(robot_goal)
+            distance.append(_math.dist(start_chemin[-1], goal_chemin[-1]))
+
+            start_dijk.append('S')
+            goal_dijk.append('G')
+
 
 
             
