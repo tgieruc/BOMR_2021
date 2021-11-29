@@ -44,7 +44,7 @@ class Vision():
         self.robot.color = np.array([254, 247, 254])
         self.goal.color = np.array([170, 163, 81])
         self.status = None
-
+        self.threshold = 50
     def set_colors(self, color_obstacles, color_robot, color_goal):
         self.obstacles.color = color_obstacles
         self.robot.color = color_robot
@@ -73,7 +73,7 @@ class Vision():
         self.update_goal()
 
     def update_obstacles(self):
-        obstacle_thresh = color_compare(self.actual_frame, self.obstacles.color, 40)
+        obstacle_thresh = color_compare(self.actual_frame, self.obstacles.color, self.threshold)
         self.obstacles.contour = polygon_detection(obstacle_thresh.astype(np.uint8), 400,
                                                    0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1])
         self.obstacles.center = self.get_centroid(self.obstacles.contour)
@@ -114,7 +114,7 @@ class Vision():
         return exp_cnt
 
     def update_robot(self):
-        robot_thresh = color_compare(self.blurred_frame, self.robot.color, 40)
+        robot_thresh = color_compare(self.blurred_frame, self.robot.color, self.threshold)
         self.robot.contour = self.get_biggest_area_cnt(polygon_detection(robot_thresh.astype(np.uint8), 400,
                                                0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1]))
         self.robot.center = self.get_centroid(self.robot.contour)
@@ -145,7 +145,7 @@ class Vision():
         return create_mask(self.robot.contour, img, [0, 0, 255])
 
     def update_goal(self):
-        goal_thresh = color_compare(self.blurred_frame, self.goal.color, 40)
+        goal_thresh = color_compare(self.blurred_frame, self.goal.color, self.threshold)
         self.goal.contour = self.get_biggest_area_cnt(polygon_detection(goal_thresh.astype(np.uint8), 400,
                                               0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1]))
         self.goal.center = self.get_centroid(self.goal.contour)
