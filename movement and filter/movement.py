@@ -1,5 +1,4 @@
 
-import numpy as np
 import sys as _sys
 _sys.path.append("../global navigation")
 from test_global_navigation import *
