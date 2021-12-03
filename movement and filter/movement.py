@@ -2,9 +2,13 @@
 import sys as _sys
 _sys.path.append("../global navigation")
 from test_global_navigation import *
+_sys.path.append("../movement and filter")
+from Kalman_filter import Kalman_filter
+
+kalman = Kalman_filter()
 
 
-def move(pos_prev, position_goal):
+def move(pos_prev, position_goal, kalman):
     wheel_radius = 44       # mm
     length_robot = 50       # mm
     k_rho = 20
@@ -22,9 +26,11 @@ def move(pos_prev, position_goal):
     beta = -theta - alpha
     v = k_rho * rho
     w = k_alpha * alpha + k_beta * beta
-    speed_left = (v + w * length_robot)/wheel_radius
-    speed_right = (v - w * length_robot) / wheel_radius
-    speed = [int(speed_right), int(speed_right)]
+    # speed_left = (v + w * length_robot)/wheel_radius
+    speed_left = (v + w * length_robot)/kalman.thymio_to_mm_speed
+    # speed_right = (v - w * length_robot) / wheel_radius
+    speed_right = (v - w * length_robot) / kalman.thymio_to_mm_speed
+    speed = [int(speed_right), int(speed_left)]
     return speed
 
 # i =1
