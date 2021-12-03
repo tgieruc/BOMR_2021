@@ -11,13 +11,18 @@ vision.update()
 """
 class Kalman_filter():
     def __init__(self):
-        self.pos_x =
-        self.pos_y =
-        self.theta =
+        self.pos_x = vision.robot.center[0][0]
+        self.pos_y = vision.robot.center[0][1]
+        self.theta = vision.robot.orientation
+        self.rho = np.sqrt(self.pos_x **2 + self.pos_y **2)
+    def compute_pos_cart(self):
+        self.pos_x = self.rho * np.cos(self.theta)
+        self.pos_y = self.rho * np.sin(self.theta)
+    def update_kalman(self):
+        #mise en place du filtre ici
 
 
 
-def kalman_filter()
 
 
 qp = 0.04
