@@ -51,7 +51,7 @@ class Vision():
 
 
     def robot_detected(self):
-        if self.robot.contour == None:
+        if self.robot.contour is None:
             return False
         if len(self.robot.contour) == 0:
             return False
@@ -59,7 +59,7 @@ class Vision():
         return True
 
     def robot_orientation_detected(self):
-        if self.robot.orientation_dot == None:
+        if self.robot.orientation_dot is None:
             return False
         if len(self.robot.orientation_dot) == 0:
             return False
