@@ -49,10 +49,19 @@ class Vision():
         self.status = None
         self.threshold = 50
 
+
     def robot_detected(self):
         if self.robot.contour == None:
             return False
         if len(self.robot.contour) == 0:
+            return False
+
+        return True
+
+    def robot_orientation_detected(self):
+        if self.robot.orientation_dot == None:
+            return False
+        if len(self.robot.orientation_dot) == 0:
             return False
 
         return True
