@@ -35,7 +35,7 @@ class Goal:
 class Vision():
     def __init__(self, path="../Vision/5_triangle.png"):
         self.actual_frame = cv2.imread(path, cv2.IMREAD_COLOR)
-        # self.actual_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_BGR2RGB)
+        self.actual_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_BGR2RGB)
         self.blurred_frame = cv2.medianBlur(self.actual_frame, 9)
         self.gray_frame = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         self.obstacles = Obstacles()
@@ -48,6 +48,14 @@ class Vision():
         self.robot.or_dot_color = np.array([255, 0, 0])
         self.status = None
         self.threshold = 50
+
+    def robot_detected(self):
+        if self.robot.contour == None:
+            return False
+        if len(self.robot.contour) == 0:
+            return False
+
+        return True
 
     def set_colors(self, color_obstacles, color_robot, color_dot, color_goal):
         self.obstacles.color = color_obstacles
