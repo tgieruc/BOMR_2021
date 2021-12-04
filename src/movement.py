@@ -1,8 +1,7 @@
 
 import sys as _sys
-_sys.path.append("../global navigation")
-from test_global_navigation import *
-_sys.path.append("../movement and filter")
+_sys.path.append("../src")
+from global_navigation import *
 from Kalman_filter import Kalman_filter
 
 kalman = Kalman_filter()

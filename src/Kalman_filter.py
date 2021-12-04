@@ -1,0 +1,79 @@
+import sys as _sys
+import numpy as np
+# from filterpy.kalman import KalmanFilter
+_sys.path.append("../src")
+from vision import *
+
+vision = Vision()
+vision.update()
+
+
+class Kalman_filter():
+    def __init__(self):
+        self.pos_x = vision.robot.center[0][0]
+        self.pos_y = vision.robot.center[0][1]
+        self.theta = vision.robot.orientation
+        self.rho = np.sqrt(self.pos_x **2 + self.pos_y **2)
+        self.rho_est = self.rho
+        self.P_est = [1000 * np.ones(2)]
+        self.state = "camera_on"
+        self.time = 100                                 #"""en ms"""
+        self.thymio_to_mm_speed = 0.435                 #"""taken from exercise 8"""
+        self.speed = 0
+        self.qp = 0.04
+        self.q_nu = 6.15
+        self.Q = np.array([[self.qp, 0], [0, self.q_nu]])
+        self.A = np.array([[1, self.time], [0, 1]])
+
+
+    def compute_pos_cart(self):
+        self.pos_x = self.rho_est * np.cos(self.theta)
+        self.pos_y = self.rho_est * np.sin(self.theta)
+    def update_value(self, robot_speed):
+        vision.update_robot()
+        self.pos_x = vision.robot.center[0][0]
+        self.pos_y = vision.robot.center[0][1]
+        self.theta = vision.robot.orientation
+        if vision.robot_detected:
+            self.state = "camera_not_on"
+        else:
+            self.state = "camera_on"
+        self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
+        self.speed = self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
+    def update_kalman(self, robot_speed):
+        self.update_value(self, robot_speed)
+        """" mise en place du filtre ici """
+        rho_est_a_priori = np.dot(self.A, self.rho_est)
+        p_est_a_priori = np.dot(self.A, np.dot(self.P_est, self.A.T)) + self.Q
+        r_nu = 6.15
+        if self.state == "camera_on":
+            """
+            kalman avec camera
+            """
+
+            rp = 0.25
+
+            R = np.array([[rp, 0], [0, r_nu]])
+            H = np.array([[1, 0], [0, 1]])
+            y = np.array([[self.rho], [self.speed]])
+        elif self.state == "camera_not_on":
+            """kalman avec uniquement les vitesses"""
+            y = self.speed
+            H = np.array([0, 1])
+            R = r_nu
+
+        i = y - np.dot(H, rho_est_a_priori)
+        S = np.dot(H, np.dot(p_est_a_priori, H.T)) + R
+        K = np.dot(p_est_a_priori, np.dot(H.T, np.linalg.inv(S)))
+
+        self.rho_est = rho_est_a_priori + np.dot(K, i)
+        self.P_est = p_est_a_priori - np.dot(K, np.dot(H, p_est_a_priori))
+
+
+
+
+
+
+
+
+
