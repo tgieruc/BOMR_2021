@@ -23,28 +23,20 @@ from vision import Vision
 #     distance: list = None
 
 
-vision = Vision()
+vision_test = Vision()
 
-vision.update()
+vision_test.update()
 
-image = vision.actual_frame.copy()
+image = vision_test.actual_frame.copy()
 
-plt.imshow(vision.create_mask_obstacles(vision.actual_frame.copy()))
+plt.imshow(vision_test.create_mask_obstacles(vision_test.actual_frame.copy()))
 
-plt.imshow(vision.create_mask_robot(vision.actual_frame.copy()))
+plt.imshow(vision_test.create_mask_robot(vision_test.actual_frame.copy()))
 
-plt.imshow(vision.create_full_mask())
+plt.imshow(vision_test.create_full_mask())
 
 # print(vision.obstacles.expanded_contour[0][0,0])
 
-
-obstacle_test = vision.obstacles.expanded_contour
-robot_start_test = np.array([int(vision.robot.center[0][0]), int(vision.robot.center[0][1])])
-# robot_start_test = np.array([650, 50])
-print(robot_start_test)
-robot_goal_test = np.array([int(vision.goal.center[0][0]), int(vision.goal.center[0][1])])
-# robot_goal_test = np.array([500, 300])
-print(robot_goal_test)
 
 # relier tous les angles des obstacles
 
@@ -254,13 +246,28 @@ def execution_dijk(distance, start_dijk, goal_dijk, robot_start, robot_goal, obs
     return resultat_coor
 
 
-    # for i in range(len(goal_chemin)):
-    #     plt.imshow(cv2.line(image, start_chemin[i], goal_chemin[i], (0, 100, 255), 5))
+def global_path(vision):
+
+    obstacle_test = vision.obstacles.expanded_contour
+    robot_start_test = np.array([int(vision.robot.center[0][0]), int(vision.robot.center[0][1])])
+    # robot_start_test = np.array([650, 50])
+    print(robot_start_test)
+    robot_goal_test = np.array([int(vision.goal.center[0][0]), int(vision.goal.center[0][1])])
+    # robot_goal_test = np.array([500, 300])
+    print(robot_goal_test)
+
+    distance, start_dijk, goal_dijk, contours_obstacles = chemin_creation(obstacle_test, robot_start_test,
+                                                                          robot_goal_test)
+
+    resultat_coor = execution_dijk(distance, start_dijk, goal_dijk, robot_start_test, robot_goal_test, obstacle_test)
+
+    return resultat_coor
 
 
-distance, start_dijk, goal_dijk, contours_obstacles = chemin_creation(obstacle_test, robot_start_test, robot_goal_test)
+distance, start_dijk, goal_dijk, contours_obstacles = chemin_creation(vision_test.obstacles.expanded_contour, np.array([int(vision_test.robot.center[0][0]), int(vision_test.robot.center[0][1])]),
+                                                                          np.array([int(vision_test.goal.center[0][0]), int(vision_test.goal.center[0][1])]))
 
-resultat_coor = execution_dijk(distance, start_dijk, goal_dijk, robot_start_test, robot_goal_test, obstacle_test)
+resultat_coor = global_path(vision_test)
 
 for i in range(len(contours_obstacles)):
     plt.imshow(cv2.line(image, contours_obstacles[i][0], contours_obstacles[i][1], (0, 255, 255), 5))
