@@ -35,7 +35,7 @@ class Goal:
 class Vision():
     def __init__(self, path="../Vision/5_triangle.png"):
         self.actual_frame = cv2.imread(path, cv2.IMREAD_COLOR)
-        self.actual_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_BGR2RGB)
+        # self.actual_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_BGR2RGB)
         self.blurred_frame = cv2.medianBlur(self.actual_frame, 9)
         self.gray_frame = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         self.obstacles = Obstacles()
