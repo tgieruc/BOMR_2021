@@ -281,5 +281,3 @@ while i in range(len(resultat_coor)):
 
 # cv2.imshow('contours',image)
 plt.show()
-
-print('fin')
