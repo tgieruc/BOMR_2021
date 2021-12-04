@@ -1,6 +1,9 @@
-import cv2
-from vision import *
+import sys as _sys
+_sys.path.append("../")
+
+from vision import Vision
 import numpy as np
+import cv2
 
 cv2.namedWindow("preview")
 vision = Vision()

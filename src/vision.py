@@ -20,7 +20,9 @@ class Robot:
     length: float = 60
     color: np.ndarray = None
     orientation: float = None
-    red_point: np.ndarray = None
+    orientation_dot: np.ndarray = None
+    or_dot_color: np.ndarray = None
+
 
 
 @dataclass
@@ -31,11 +33,11 @@ class Goal:
 
 
 class Vision():
-    def __init__(self):
-        self.actual_frame = cv2.imread('../Vision/example.png', cv2.IMREAD_COLOR)
+    def __init__(self, path="../Vision/5_triangle.png"):
+        self.actual_frame = cv2.imread(path, cv2.IMREAD_COLOR)
         self.actual_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_BGR2RGB)
         self.blurred_frame = cv2.medianBlur(self.actual_frame, 9)
-        self.gray_frame = cv2.imread('../Vision/example.png', cv2.IMREAD_GRAYSCALE)
+        self.gray_frame = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         self.obstacles = Obstacles()
         self.robot = Robot()
         self.goal = Goal()
@@ -43,12 +45,15 @@ class Vision():
         self.obstacles.color = np.array([31, 33, 28])
         self.robot.color = np.array([254, 247, 254])
         self.goal.color = np.array([170, 163, 81])
+        self.robot.or_dot_color = np.array([255, 0, 0])
         self.status = None
         self.threshold = 50
-    def set_colors(self, color_obstacles, color_robot, color_goal):
+
+    def set_colors(self, color_obstacles, color_robot, color_dot, color_goal):
         self.obstacles.color = color_obstacles
         self.robot.color = color_robot
-        self.goal.color  = color_goal
+        self.goal.color = color_goal
+        self.robot.or_dot_color = color_dot
 
     def disconnect_camera(self):
         self.vc.release()
@@ -68,8 +73,8 @@ class Vision():
         """
         Updates (obstacles robots aim)_array and _mask
         """
-        self.update_obstacles()
         self.update_robot()
+        self.update_obstacles()
         self.update_goal()
 
     def update_obstacles(self):
@@ -116,17 +121,20 @@ class Vision():
     def update_robot(self):
         robot_thresh = color_compare(self.blurred_frame, self.robot.color, self.threshold)
         self.robot.contour = self.get_biggest_area_cnt(polygon_detection(robot_thresh.astype(np.uint8), 400,
-                                               0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1]))
+                                                                         0.9 * self.actual_frame.shape[0] *
+                                                                         self.actual_frame.shape[1]))
         self.robot.center = self.get_centroid(self.robot.contour)
+        if self.robot.center.size != 0:
+            _, self.robot.length = cv2.minEnclosingCircle(self.robot.contour[0])
+            self.robot.length *= 2
 
-        red_point_tresh = color_compare(self.blurred_frame, np.array([255, 0, 0]), 40)
+        red_point_tresh = color_compare(self.blurred_frame, self.robot.or_dot_color, 40)
         red_point_cnt = polygon_detection(red_point_tresh.astype(np.uint8), 5, 2000)
 
         if (red_point_cnt != []) & (self.robot.center.size != 0):
-            self.robot.red_point = self.get_centroid(red_point_cnt)
-            self.robot.orientation = np.arctan2(self.robot.red_point[0, 1] - self.robot.center[0, 1],
-                                            self.robot.red_point[0, 0] - self.robot.center[0, 0])
-
+            self.robot.orientation_dot = self.get_centroid(red_point_cnt)
+            self.robot.orientation = np.arctan2(self.robot.orientation_dot[0, 1] - self.robot.center[0, 1],
+                                                self.robot.orientation_dot[0, 0] - self.robot.center[0, 0])
 
     def create_mask_robot(self, img):
         """
@@ -138,16 +146,18 @@ class Vision():
         Output:
         - the image with the mask
         """
-        if (self.robot.red_point.size != 0) & (self.robot.center.size != 0):
-            center = self.robot.center.astype(int)
-            red_pt = self.robot.red_point.astype(int)
-            img = cv2.line(img, (center[0, 0], center[0, 1]), (red_pt[0, 0], red_pt[0, 1]), (0, 0, 255), 6)
+        if (self.robot.contour is not None) & (self.robot.orientation_dot is not None):
+            if (self.robot.orientation_dot.size != 0) & (self.robot.center.size != 0):
+                center = self.robot.center.astype(int)
+                red_pt = self.robot.orientation_dot.astype(int)
+                img = cv2.line(img, (center[0, 0], center[0, 1]), (red_pt[0, 0], red_pt[0, 1]), (0, 0, 255), 6)
         return create_mask(self.robot.contour, img, [0, 0, 255])
 
     def update_goal(self):
         goal_thresh = color_compare(self.blurred_frame, self.goal.color, self.threshold)
         self.goal.contour = self.get_biggest_area_cnt(polygon_detection(goal_thresh.astype(np.uint8), 400,
-                                              0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1]))
+                                                                        0.9 * self.actual_frame.shape[0] *
+                                                                        self.actual_frame.shape[1]))
         self.goal.center = self.get_centroid(self.goal.contour)
 
     def create_mask_goal(self, img):
@@ -211,8 +221,9 @@ def create_mask(contours, img_mask, color):
     Output:
     - the image with the mask
     """
-    for cnt in contours:
-        cv2.drawContours(img_mask, [cnt], 0, (color[0], color[1], color[2]), 2)
+    if contours is not None:
+        for cnt in contours:
+            cv2.drawContours(img_mask, [cnt], 0, (color[0], color[1], color[2]), 2)
     return img_mask
 
 
