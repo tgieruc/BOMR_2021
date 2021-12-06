@@ -1,15 +1,9 @@
-import sys as _sys
+from vision import Vision
 import numpy as np
-# from filterpy.kalman import KalmanFilter
-_sys.path.append("../src")
-from vision import *
-
-vision = Vision()
-vision.update()
 
 
 class Kalman_filter():
-    def __init__(self):
+    def __init__(self, vision):
         self.pos_x = vision.robot.center[0][0]
         self.pos_y = vision.robot.center[0][1]
         self.theta = vision.robot.orientation
@@ -29,8 +23,7 @@ class Kalman_filter():
         self.pos_x = self.rho_est * np.cos(self.theta)
         self.pos_y = self.rho_est * np.sin(self.theta)
 
-    def update_value(self, robot_speed):
-        vision.update_robot()
+    def update_value(self, vision, robot_speed):
         self.pos_x = vision.robot.center[0][0]
         self.pos_y = vision.robot.center[0][1]
         self.theta = vision.robot.orientation
@@ -41,8 +34,8 @@ class Kalman_filter():
         self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
         self.speed = self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
 
-    def update_kalman(self, robot_speed):
-        self.update_value(robot_speed)
+    def update_kalman(self, vision, robot_speed):
+        self.update_value(vision, robot_speed)
         """" mise en place du filtre ici """
         rho_est_a_priori = np.dot(self.A, self.rho_est)
         p_est_a_priori = np.dot(self.A, np.dot(self.P_est, self.A.T)) + self.Q
@@ -51,7 +44,6 @@ class Kalman_filter():
             """
             kalman avec camera
             """
-
             rp = 0.25
 
             R = np.array([[rp, 0], [0, r_nu]])
@@ -69,6 +61,4 @@ class Kalman_filter():
 
         self.rho_est = rho_est_a_priori + np.dot(K, i)
         self.P_est = p_est_a_priori - np.dot(K, np.dot(H, p_est_a_priori))
-
-kalman = Kalman_filter()
-kalman.update_kalman([0,0])
+        self.compute_pos_cart()

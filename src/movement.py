@@ -1,10 +1,5 @@
-
-import sys as _sys
-_sys.path.append("../src")
-from global_navigation import *
+import numpy as np
 from Kalman_filter import Kalman_filter
-
-kalman = Kalman_filter()
 
 
 def move(pos_prev, position_goal, kalman):
@@ -31,27 +26,3 @@ def move(pos_prev, position_goal, kalman):
     speed_right = (v - w * length_robot) / kalman.thymio_to_mm_speed
     speed = [int(speed_right), int(speed_left)]
     return speed
-
-# i =1
-# timer_period[0] = 100
-# @onevent
-# def timer0():
-#     global motor_right_target, motor_left_target, i
-#     pos_goal = resultat_coor[i]
-#     pos =  # prendre la valeur de Kalman
-#     if pos[0] == pos_goal[0] and pos[1] == pos_goal[1]:
-#         i = i+1
-#     speed = move(pos, pos_goal)
-#     motor_right_target = speed[0]
-#     motor_left_target = speed[1]
-
-
-
-# for i in len(resultat_coor):
-#     pos_goal = resultat_coor[i]
-#     pos =  # prendre la valeur de Kalman
-#     while pos != pos_goal:
-#         pos =  # prendre la valeur de Kalman
-#         speed = move(pos, pos_goal)
-#         motor_right_target = speed[1]
-#         motor_left_target = speed[2]
