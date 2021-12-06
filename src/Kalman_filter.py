@@ -8,20 +8,21 @@ class Kalman_filter():
         self.pos_y = vision.robot.center[0][1]
         self.theta = vision.robot.orientation
         self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
-        self.rho_est = self.rho
+        self.alpha = np.arctan2(self.pos_y, self.pos_x)
         self.P_est = 1000 * np.ones(2)
         self.state = "camera_on"
         self.time = 100                                 #"""en ms"""
         self.thymio_to_mm_speed = 0.435                 #"""taken from exercise 8"""
         self.speed = 0
+        self.rho_est = np.array([[self.rho],[self.speed]])
         self.qp = 0.04
         self.q_nu = 6.15
         self.Q = np.array([[self.qp, 0], [0, self.q_nu]])
         self.A = np.array([[1, self.time/1000], [0, 1]])
 
     def compute_pos_cart(self):
-        self.pos_x = self.rho_est * np.cos(self.theta)
-        self.pos_y = self.rho_est * np.sin(self.theta)
+        self.pos_x = self.rho_est[0] * np.cos(self.alpha)
+        self.pos_y = self.rho_est[0] * np.sin(self.alpha)
 
     def update_value(self, vision, robot_speed):
         self.pos_x = vision.robot.center[0][0]
