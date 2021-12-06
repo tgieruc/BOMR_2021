@@ -1,6 +1,5 @@
 
 import numpy as np
-from vision import Vision
 
 
 class Kalman_filter():
