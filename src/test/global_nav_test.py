@@ -9,6 +9,7 @@ vision = Vision("example.png")
 path_planner = Path_planner()
 
 vision.update()
+
 path_planner.make_path(vision)
 img = get_visualization(vision, path_planner)
 

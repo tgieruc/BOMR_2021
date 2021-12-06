@@ -36,6 +36,10 @@ class Goal:
 
 class Vision():
     def __init__(self, path="../Vision/5_triangle.png"):
+        # self.actual_frame = cv2.imread(path, cv2.IMREAD_COLOR)
+        # self.actual_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_BGR2RGB)
+        # self.blurred_frame = cv2.medianBlur(self.actual_frame, 9)
+        # self.gray_frame = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         self.actual_frame = None
         # self.actual_frame = cv2.cvtColor(self.actual_frame, cv2.COLOR_BGR2RGB)
         self.blurred_frame = None
@@ -44,12 +48,12 @@ class Vision():
         self.robot = Robot()
         self.goal = Goal()
         self.vc = None
-        self.obstacles.color = np.array([0, 0, 0])
-        self.robot.color = np.array([150, 20, 20])
-        self.goal.color = np.array([78, 129, 64])
+        self.obstacles.color =  np.array([17, 21, 20])
+        self.robot.color = np.array([148, 49, 48])
+        self.goal.color =np.array([78, 130, 69])
         self.status = None
         self.goal.thresh = 20
-        self.robot.thresh = 45
+        self.robot.thresh = 20
         self.obstacles.thresh = 40
 
 
@@ -77,7 +81,7 @@ class Vision():
         self.vc.release()
 
     def connect_camera(self, camera_number):
-        self.vc = cv2.VideoCapture(camera_number)
+        self.vc = cv2.VideoCapture(camera_number, cv2.CAP_DSHOW)
 
     def update_frame(self):
         captured = False
@@ -133,7 +137,7 @@ class Vision():
                 e1 = cnt[(j - 1) % cnt.shape[0]] - corner
                 e2 = cnt[(j + 1) % cnt.shape[0]] - corner
                 bissec = (e1 / np.linalg.norm(e1) + e2 / np.linalg.norm(e2))
-                exp_cnt[i][j] = corner - self.robot.length / 2 * bissec / np.linalg.norm(bissec)
+                exp_cnt[i][j] = corner - 1.5 * self.robot.length / 2 * bissec / np.linalg.norm(bissec)
 
         return exp_cnt
 
@@ -147,13 +151,13 @@ class Vision():
 
     def update_robot(self):
         robot_thresh = color_compare(self.actual_frame, self.robot.color, self.robot.thresh)
-        self.robot.contour = self.get_triangle(polygon_detection(robot_thresh.astype(np.uint8), 400,
+        self.robot.contour = self.get_triangle(polygon_detection(robot_thresh.astype(np.uint8), 40,
                                                                          0.9 * self.actual_frame.shape[0] *
                                                                          self.actual_frame.shape[1]))
         self.robot.center = self.get_centroid(self.robot.contour)
         if self.robot.center.size != 0:
             _, self.robot.length = cv2.minEnclosingCircle(self.robot.contour[0])
-            self.robot.length *= 3
+            self.robot.length *= 2
             self.get_robot_orientation()
 
     def get_robot_orientation(self):
@@ -183,6 +187,11 @@ class Vision():
         Output:
         - the image with the mask
         """
+        if self.robot_detected():
+            point = (self.robot.center + np.array([[np.cos(self.robot.orientation)* 100,-np.sin(self.robot.orientation)* 100]])).astype(int)
+            center = self.robot.center.astype(int)
+            img = cv2.line(img, (center[0,0], center[0,1]), (point[0,0], point[0,1]), (0, 255, 0), thickness=3, lineType=8)
+
         return create_mask(self.robot.contour, img, [0, 0, 255])
 
     def update_goal(self):
