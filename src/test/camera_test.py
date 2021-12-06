@@ -1,24 +1,32 @@
 import sys as _sys
+from time import sleep
 _sys.path.append("../")
-
-from vision import Vision
 import numpy as np
 import cv2
-
-cv2.namedWindow("preview")
-vision = Vision()
-
-vision.connect_camera(0)
-vision.update()
-color_goal = np.array([200, 195, 53])
-vision.goal.color = color_goal
-while 1:
+from vision import *
+import matplotlib.pyplot as plt
+vision = Vision("example.png")
+# vision.disconnect_camera()
+vision.connect_camera(1)
+vision.update_frame()
+for i in range(10):
+    sleep(0.05)
     vision.update_frame()
-    vision.update()
-    cv2.imshow("preview", vision.create_full_mask())
-    key = cv2.waitKey(20)
-    if key == 27: # exit on ESC
-        break
 
-vision.disconnect_camera()
-cv2.destroyWindow("preview")
+vision.update()
+def plot(img):
+    plt.imshow((img))
+    plt.show()
+
+plt.imshow(vision.create_mask_goal(vision.actual_frame.copy()))
+
+
+plt.imshow(vision.create_mask_obstacles(vision.actual_frame.copy()))
+
+
+plt.imshow(vision.create_mask_robot(vision.actual_frame.copy()))
+
+
+plt.imshow(vision.create_full_mask())
+plt.show()
+

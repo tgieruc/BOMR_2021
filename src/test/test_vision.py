@@ -5,6 +5,8 @@ from vision import Vision
 import matplotlib.pyplot as plt
 vision = Vision("example.png")
 
+
+
 vision.update()
 
 
