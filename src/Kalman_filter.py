@@ -25,7 +25,6 @@ class Kalman_filter():
         self.pos_y = self.rho_est * np.sin(self.theta)
 
     def update_value(self, vision, robot_speed):
-        vision.update_robot(vision)
         self.pos_x = vision.robot.center[0][0]
         self.pos_y = vision.robot.center[0][1]
         self.theta = vision.robot.orientation
