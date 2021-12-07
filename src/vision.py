@@ -112,10 +112,34 @@ class Vision():
 
     def update_obstacles(self):
         obstacle_thresh = color_compare(self.actual_frame, self.obstacles.color, self.obstacles.thresh)
+        obstacle_thresh[0:int(self.robot.length),:] = 255
+        obstacle_thresh[-int(self.robot.length):,:] = 255
+        obstacle_thresh[:,:int(self.robot.length)] = 255
+        obstacle_thresh[:,-int(self.robot.length):] = 255
         self.obstacles.contour = polygon_detection(obstacle_thresh.astype(np.uint8), 400,
                                                    0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1])
         self.obstacles.center = self.get_centroid(self.obstacles.contour)
         self.obstacles.expanded_contour = self.expand_contours()
+        self.simplify_expanded_edges()
+
+
+    def simplify_expanded_edges(self):
+        img = 255 * np.ones_like(self.actual_frame[:,:,0])
+        if self.obstacles.expanded_contour is not None:
+            for cnt in self.obstacles.expanded_contour:
+                cv2.drawContours(img, [cnt], 0, 0, thickness=cv2.FILLED)
+            self.obstacles.expanded_contour = polygon_detection(img.astype(np.uint8), 400,
+                                                       0.9 * self.actual_frame.shape[0] * self.actual_frame.shape[1])
+            img = 255 * np.ones_like(self.actual_frame[:,:,0])
+
+            for contour in self.obstacles.expanded_contour:
+                convexHull = cv2.convexHull(contour)
+                cv2.drawContours(img, [convexHull], -1, 0, 2)
+            self.obstacles.expanded_contour = polygon_detection(img.astype(np.uint8), 400,
+                                                                    0.9 * self.actual_frame.shape[0] *
+                                                                    self.actual_frame.shape[1])
+
+
 
     def create_mask_obstacles(self, img):
         """
@@ -147,7 +171,7 @@ class Vision():
                 e1 = cnt[(j - 1) % cnt.shape[0]] - corner
                 e2 = cnt[(j + 1) % cnt.shape[0]] - corner
                 bissec = (e1 / np.linalg.norm(e1) + e2 / np.linalg.norm(e2))
-                exp_cnt[i][j] = corner - 1.5 * self.robot.length / 2 * bissec / np.linalg.norm(bissec)
+                exp_cnt[i][j] = corner - self.robot.length * bissec / np.linalg.norm(bissec)
 
         return exp_cnt
 
@@ -161,6 +185,7 @@ class Vision():
 
     def update_robot(self):
         robot_thresh = color_compare(self.actual_frame, self.robot.color, self.robot.thresh)
+
         self.robot.contour = self.get_triangle(polygon_detection(robot_thresh.astype(np.uint8), 40,
                                                                  0.9 * self.actual_frame.shape[0] *
                                                                  self.actual_frame.shape[1]))
