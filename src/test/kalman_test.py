@@ -6,7 +6,7 @@ from Kalman_filter import Kalman_filter
 
 vision = Vision("example.png")
 vision.update()
-robot_speed = [100, 100]
+robot_speed = [100, -100]
 kalman = Kalman_filter(vision)
-kalman.update_kalman(vision, robot_speed)
-print(kalman.pos_x)
+kalman.update_kalman(vision, robot_speed, 0.1)
+print(kalman.rho_est[0])
