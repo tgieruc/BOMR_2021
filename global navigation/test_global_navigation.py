@@ -62,6 +62,13 @@ nom_dijk = ['S', 'G']
 start_dijk = []
 goal_dijk = []
 
+pt_obstacle = []
+poly = []
+
+for i in range(len(obstacle)):
+    pt_obstacle.append(list(map(Point, obstacle[i])))
+    poly.append(Polygon(*pt_obstacle[i]))
+
 # relier tous les angles des obstacles
 
 contours_obstacles = []
@@ -73,31 +80,81 @@ num = 0
 
 for i in range(len(obstacle)): #parcours tous les obstacles
     for j in range(len(obstacle[i])): #parcours tous les angles
-        nom_dijk.append(j*len(obstacle)+i)
-        print(i, ',', j, ',', j*len(obstacle)+i, obstacle[i][j])
+        inside = False
+        maxIntersection = 0
+        intersection = 0
         if j < len(obstacle[i])-1:
-            contours_obstacles.append([obstacle[i][j], obstacle[i][j+1]])
-            distance.append(_math.dist(obstacle[i][j], obstacle[i][j+1]))
-            start_dijk.append(j * len(obstacle) + i)
-            goal_dijk.append((j+1) * len(obstacle) + i)
-            distance.append(_math.dist(obstacle[i][j+1], obstacle[i][j]))
-            start_dijk.append((j+1) * len(obstacle) + i)
-            goal_dijk.append(j * len(obstacle) + i)
+            contours_obstacles.append([obstacle[i][j], obstacle[i][j + 1]])
+            start_tmp, goal_tmp = map(Point, [obstacle[i][j], obstacle[i][j + 1]])
+            chemin = Line(start_tmp, goal_tmp)
+
+            maxIntersection = 0
+            intersection = 0
+            inside = False
+
+            for m in range(len(obstacle)):
+                if m != i:
+                    isIntersection = poly[m].intersection(chemin)
+
+                    intersection = len(isIntersection)
+
+                    for n in range(len(isIntersection)):
+                        if (start_tmp[0] > isIntersection[n][0] < goal_tmp[0] or start_tmp[0] < isIntersection[n][0] >
+                                goal_tmp[0]):
+                            intersection = intersection - 1
+
+                    if intersection > maxIntersection:
+                        maxIntersection = intersection
+
+            for a in range(len(obstacle)):
+                if poly[a].encloses_point(pt_obstacle[i][j]):
+                    inside = True
+                    break
+            if maxIntersection == 1 and not inside:
+                nom_dijk.append(j * len(obstacle) + i)
+                distance.append(_math.dist(obstacle[i][j], obstacle[i][j+1]))
+                start_dijk.append(j * len(obstacle) + i)
+                goal_dijk.append((j+1) * len(obstacle) + i)
+                distance.append(_math.dist(obstacle[i][j+1], obstacle[i][j]))
+                start_dijk.append((j+1) * len(obstacle) + i)
+                goal_dijk.append(j * len(obstacle) + i)
         else:
             contours_obstacles.append([obstacle[i][j], obstacle[i][0]])
-            distance.append(_math.dist(obstacle[i][j], obstacle[i][0]))
-            start_dijk.append(j * len(obstacle) + i)
-            goal_dijk.append(i)
-            distance.append(_math.dist(obstacle[i][0], obstacle[i][j]))
-            start_dijk.append(i)
-            goal_dijk.append(j * len(obstacle) + i)
 
-pt_obstacle = []
-poly = []
+            contours_obstacles.append([obstacle[i][j], obstacle[i][0]])
+            start_tmp, goal_tmp = map(Point, [obstacle[i][j], obstacle[i][0]])
+            chemin = Line(start_tmp, goal_tmp)
 
-for i in range(len(obstacle)):
-    pt_obstacle.append(list(map(Point, obstacle[i])))
-    poly.append(Polygon(*pt_obstacle[i]))
+            maxIntersection = 0
+            intersection = 0
+            inside = False
+
+            for m in range(len(obstacle)):
+                if m != i:
+                    isIntersection = poly[m].intersection(chemin)
+
+                    intersection = len(isIntersection)
+
+                    for n in range(len(isIntersection)):
+                        if (start_tmp[0] > isIntersection[n][0] < goal_tmp[0] or start_tmp[0] < isIntersection[n][0] >
+                                goal_tmp[0]):
+                            intersection = intersection - 1
+
+                    if intersection > maxIntersection:
+                        maxIntersection = intersection
+            for a in range(len(obstacle)):
+                if poly[a].encloses_point(pt_obstacle[i][j]):
+                    inside = True
+                    break
+            if maxIntersection == 1 and not inside:
+                nom_dijk.append(j * len(obstacle) + i)
+                distance.append(_math.dist(obstacle[i][j], obstacle[i][0]))
+                start_dijk.append(j * len(obstacle) + i)
+                goal_dijk.append(i)
+                distance.append(_math.dist(obstacle[i][0], obstacle[i][j]))
+                start_dijk.append(i)
+                goal_dijk.append(j * len(obstacle) + i)
+
 
 for i in range(len(obstacle)): # parcours tous les obstacles
     # print(obstacle[i])
@@ -112,6 +169,7 @@ for i in range(len(obstacle)): # parcours tous les obstacles
 
                 maxIntersection = 0
                 intersection = 0
+                inside = False
 
                 for m in range(len(obstacle)):
                     isIntersection = poly[m].intersection(chemin)
@@ -126,11 +184,11 @@ for i in range(len(obstacle)): # parcours tous les obstacles
                     if intersection > maxIntersection:
                         maxIntersection = intersection
 
-                # if i == 2 and j == 1 and l == 3:
-                    # print(maxIntersection)
-                    # print(test)
+                for a in range(len(obstacle)):
+                    if poly[a].encloses_point(start_tmp) or poly[a].encloses_point(goal_tmp):
+                        inside = True
 
-                if maxIntersection == 1:
+                if maxIntersection == 1 and (not inside):
                     start_chemin.append(obstacle[i][j])
                     goal_chemin.append(obstacle[k + i + 1][l])
 
@@ -149,6 +207,7 @@ for i in range(len(obstacle)): # parcours tous les obstacles
 
         maxIntersection = 0
         intersection = 0
+        inside = False
 
         for m in range(len(obstacle)):
             isIntersection = poly[m].intersection(chemin)
@@ -163,7 +222,10 @@ for i in range(len(obstacle)): # parcours tous les obstacles
             if intersection > maxIntersection:
                 maxIntersection = intersection
 
-        if maxIntersection == 1:
+            if poly[m].encloses_point(start_tmp) or poly[m].encloses_point(goal_tmp):
+                inside = True
+
+        if maxIntersection == 1 and (not inside):
             start_chemin.append(obstacle[i][j])
             goal_chemin.append(robot_start)
             distance.append(_math.dist(start_chemin[-1], goal_chemin[-1]))
@@ -178,6 +240,7 @@ for i in range(len(obstacle)): # parcours tous les obstacles
 
         maxIntersection = 0
         intersection = 0
+        inside = False
 
         for m in range(len(obstacle)):
             isIntersection = poly[m].intersection(chemin)
@@ -192,7 +255,10 @@ for i in range(len(obstacle)): # parcours tous les obstacles
             if intersection > maxIntersection:
                 maxIntersection = intersection
 
-        if maxIntersection == 1:
+            if poly[m].encloses_point(start_tmp) or poly[m].encloses_point(goal_tmp):
+                inside = True
+
+        if maxIntersection == 1 and (not inside):
             start_chemin.append(obstacle[i][j])
             goal_chemin.append(robot_goal)
             distance.append(_math.dist(start_chemin[-1], goal_chemin[-1]))
