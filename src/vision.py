@@ -183,7 +183,7 @@ class Vision():
         else:
             sommet = contour[1]
 
-        self.robot.orientation = -np.arctan2(sommet[1] - self.robot.center[0, 1], sommet[0] - self.robot.center[0, 0])
+        self.robot.orientation = np.arctan2(sommet[1] - self.robot.center[0, 1], sommet[0] - self.robot.center[0, 0])
 
     def create_mask_robot(self, img):
         """
@@ -197,7 +197,7 @@ class Vision():
         """
         if self.robot_detected():
             point = (self.robot.center + np.array(
-                [[np.cos(self.robot.orientation) * 100, -np.sin(self.robot.orientation) * 100]])).astype(int)
+                [[np.cos(self.robot.orientation) * 100, np.sin(self.robot.orientation) * 100]])).astype(int)
             center = self.robot.center.astype(int)
             img = cv2.line(img, (center[0, 0], center[0, 1]), (point[0, 0], point[0, 1]), (0, 255, 0), thickness=3,
                            lineType=8)

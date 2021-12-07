@@ -30,8 +30,14 @@ class Kalman_filter():
         rho_est_a_priori = np.dot(self.A, self.rho_est)
         p_est_a_priori = np.dot(self.A, np.dot(self.P_est, self.A.T)) + self.Q
         r_nu = 6.15
-        self.speed = vision.mm2px * self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
-        if vision.robot_detected:
+        robot_dist = robot_speed * 2 * np.pi * self.thymio_to_mm_speed * time
+        theta_endo = self.theta + (robot_dist[1] - robot_dist[0]) / 100
+        dc = np.mean(robot_dist)
+        x_endo = -dc * np.sin(theta_endo)
+        y_endo = dc * np.cos(theta_endo)
+
+        self.speed = vision.mm2px * self.thymio_to_mm_speed * (np.cos(self.theta) *robot_speed[0] + np.sin(self.theta) * robot_speed[1]) / 2
+        if vision.robot_detected():
             """
             kalman avec camera
             """
