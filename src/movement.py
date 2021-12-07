@@ -14,14 +14,14 @@ def move(vision, pos_prev, position_goal, min_angle, k_rho=100, k_alpha=400, k_b
     beta = -pos_prev[2] - alpha
     if abs(alpha) > min_angle:
         print("test")
-        return [int((k_rot * alpha * length_robot) / 0.435 / wheel_radius),
-                int(-(k_rot * alpha * length_robot) / 0.435 / wheel_radius)], dpos
+        return [int((k_rot * alpha * length_robot) / wheel_radius),
+                int(-(k_rot * alpha * length_robot) / wheel_radius)], dpos
     else:
         v = k_rho * rho
         w = k_alpha * alpha + k_beta * beta
         # speed_left = (v + w * length_robot)/wheel_radius
-        speed_left = (v + w * length_robot) / 0.435 / wheel_radius
+        speed_left = (v + w * length_robot) / wheel_radius
         # speed_right = (v - w * length_robot) / wheel_radius
-        speed_right = (v - w * length_robot) / 0.435 / wheel_radius
+        speed_right = (v - w * length_robot)/ wheel_radius
         speed = [int(speed_left), int(speed_right)]
         return speed, dpos
