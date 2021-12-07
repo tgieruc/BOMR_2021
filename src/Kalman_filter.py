@@ -45,10 +45,12 @@ class Kalman_filter():
             y = np.array([[self.rho], [self.speed]])
         else:
             """kalman avec uniquement les vitesses"""
-            self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
+            self.rho = np.sqrt(self.pos_x[0] ** 2 + self.pos_y[0] ** 2)
             y = self.speed
-            H = np.array([0, 1])
+            H = np.array([[0, 1]])
             R = r_nu
+            print("no camera")
+            print(y)
 
         i = y - np.dot(H, rho_est_a_priori)
         S = np.dot(H, np.dot(p_est_a_priori, H.T)) + R
