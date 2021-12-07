@@ -10,7 +10,6 @@ class Kalman_filter():
         self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
         self.alpha = np.arctan2(self.pos_y, self.pos_x)
         self.P_est = 1000 * np.ones(2)
-        self.state = "camera_on"
         self.time = 100                                 #"""en ms"""
         self.thymio_to_mm_speed = 0.435                 #"""taken from exercise 8"""
         self.speed = 0
@@ -24,20 +23,13 @@ class Kalman_filter():
         self.pos_x = self.rho_est[0] * np.cos(self.alpha)
         self.pos_y = self.rho_est[0] * np.sin(self.alpha)
 
-    def update_value(self, vision, robot_speed):
-        if vision.robot_detected:
-            self.state = "camera_on"
-        else:
-            self.state = "camera_not_on"
-        self.speed = vision.mm2px * self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
-
     def update_kalman(self, vision, robot_speed):
-        self.update_value(vision, robot_speed)
         """" mise en place du filtre ici """
         rho_est_a_priori = np.dot(self.A, self.rho_est)
         p_est_a_priori = np.dot(self.A, np.dot(self.P_est, self.A.T)) + self.Q
         r_nu = 6.15
-        if self.state == "camera_on":
+        self.speed = vision.mm2px * self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
+        if vision.robot_detected:
             """
             kalman avec camera
             """
@@ -51,7 +43,7 @@ class Kalman_filter():
             R = np.array([[rp, 0], [0, r_nu]])
             H = np.array([[1, 0], [0, 1]])
             y = np.array([[self.rho], [self.speed]])
-        elif self.state == "camera_not_on":
+        else:
             """kalman avec uniquement les vitesses"""
             self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
             y = self.speed
