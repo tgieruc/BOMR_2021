@@ -25,14 +25,10 @@ class Kalman_filter():
         self.pos_y = self.rho_est[0] * np.sin(self.alpha)
 
     def update_value(self, vision, robot_speed):
-        self.pos_x = vision.robot.center[0][0]
-        self.pos_y = vision.robot.center[0][1]
-        self.theta = vision.robot.orientation
         if vision.robot_detected:
             self.state = "camera_on"
         else:
             self.state = "camera_not_on"
-        self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
         self.speed = vision.mm2px * self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
 
     def update_kalman(self, vision, robot_speed):
@@ -45,6 +41,11 @@ class Kalman_filter():
             """
             kalman avec camera
             """
+            self.pos_x = vision.robot.center[0][0]
+            self.pos_y = vision.robot.center[0][1]
+            self.theta = vision.robot.orientation
+            self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
+
             rp = 0.25
 
             R = np.array([[rp, 0], [0, r_nu]])
@@ -52,6 +53,7 @@ class Kalman_filter():
             y = np.array([[self.rho], [self.speed]])
         elif self.state == "camera_not_on":
             """kalman avec uniquement les vitesses"""
+            self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
             y = self.speed
             H = np.array([0, 1])
             R = r_nu
