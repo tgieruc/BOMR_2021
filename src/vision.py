@@ -24,8 +24,6 @@ class Robot:
     thresh: int = None
 
 
-
-
 @dataclass
 class Goal:
     contour: list = None
@@ -48,20 +46,33 @@ class Vision():
         self.robot = Robot()
         self.goal = Goal()
         self.vc = None
-        self.obstacles.color =  np.array([17, 21, 20])
+        self.obstacles.color = np.array([17, 21, 20])
         self.robot.color = np.array([148, 49, 48])
-        self.goal.color =np.array([78, 130, 69])
+        self.goal.color = np.array([78, 130, 69])
         self.status = None
         self.goal.thresh = 20
         self.robot.thresh = 20
         self.obstacles.thresh = 40
+        self.mm2px = None
+        self.length_edge = 115
 
+    def set_mm2px(self):
+        if not self.robot_detected():
+            print("First the robot has to be detected")
+        else:
+            contour = self.robot.contour[0]
+            d1 = np.linalg.norm(contour[0] - contour[1])
+            d2 = np.linalg.norm(contour[2] - contour[1])
+            d3 = np.linalg.norm(contour[0] - contour[2])
+
+            longest_edge = max(d1, d2, d3)
+            self.mm2px = longest_edge / self.length_edge
+            print("mm/px ratio : ",self.mm2px)
 
     def set_tresh(self, go, ro, ob):
         self.goal.thresh = go
         self.robot.thresh = ro
         self.obstacles.thresh = ob
-
 
     def robot_detected(self):
         if self.robot.contour is None:
@@ -75,7 +86,6 @@ class Vision():
         self.obstacles.color = color_obstacles
         self.robot.color = color_robot
         self.goal.color = color_goal
-
 
     def disconnect_camera(self):
         self.vc.release()
@@ -152,8 +162,8 @@ class Vision():
     def update_robot(self):
         robot_thresh = color_compare(self.actual_frame, self.robot.color, self.robot.thresh)
         self.robot.contour = self.get_triangle(polygon_detection(robot_thresh.astype(np.uint8), 40,
-                                                                         0.9 * self.actual_frame.shape[0] *
-                                                                         self.actual_frame.shape[1]))
+                                                                 0.9 * self.actual_frame.shape[0] *
+                                                                 self.actual_frame.shape[1]))
         self.robot.center = self.get_centroid(self.robot.contour)
         if self.robot.center.size != 0:
             _, self.robot.length = cv2.minEnclosingCircle(self.robot.contour[0])
@@ -175,8 +185,6 @@ class Vision():
 
         self.robot.orientation = -np.arctan2(sommet[1] - self.robot.center[0, 1], sommet[0] - self.robot.center[0, 0])
 
-
-
     def create_mask_robot(self, img):
         """
         This method creates a mask of the robot
@@ -188,9 +196,11 @@ class Vision():
         - the image with the mask
         """
         if self.robot_detected():
-            point = (self.robot.center + np.array([[np.cos(self.robot.orientation)* 100,-np.sin(self.robot.orientation)* 100]])).astype(int)
+            point = (self.robot.center + np.array(
+                [[np.cos(self.robot.orientation) * 100, -np.sin(self.robot.orientation) * 100]])).astype(int)
             center = self.robot.center.astype(int)
-            img = cv2.line(img, (center[0,0], center[0,1]), (point[0,0], point[0,1]), (0, 255, 0), thickness=3, lineType=8)
+            img = cv2.line(img, (center[0, 0], center[0, 1]), (point[0, 0], point[0, 1]), (0, 255, 0), thickness=3,
+                           lineType=8)
 
         return create_mask(self.robot.contour, img, [0, 0, 255])
 
