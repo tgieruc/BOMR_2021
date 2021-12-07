@@ -10,21 +10,23 @@ class Kalman_filter():
         self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
         self.alpha = np.arctan2(self.pos_y, self.pos_x)
         self.P_est = 1000 * np.ones(2)
-        self.time = 100                                 #"""en ms"""
+        self.time = 0.01                                #"""en s"""
         self.thymio_to_mm_speed = 0.435                 #"""taken from exercise 8"""
         self.speed = 0
         self.rho_est = np.array([[self.rho],[self.speed]])
         self.qp = 0.04
         self.q_nu = 6.15
         self.Q = np.array([[self.qp, 0], [0, self.q_nu]])
-        self.A = np.array([[1, self.time/1000], [0, 1]])
+        self.A = np.array([[1, self.time], [0, 1]])
 
     def compute_pos_cart(self):
         self.pos_x = self.rho_est[0] * np.cos(self.alpha)
         self.pos_y = self.rho_est[0] * np.sin(self.alpha)
 
-    def update_kalman(self, vision, robot_speed):
+    def update_kalman(self, vision, robot_speed, time):
         """" mise en place du filtre ici """
+        self.time = time
+        self.A = np.array([[1, self.time], [0, 1]])
         rho_est_a_priori = np.dot(self.A, self.rho_est)
         p_est_a_priori = np.dot(self.A, np.dot(self.P_est, self.A.T)) + self.Q
         r_nu = 6.15
