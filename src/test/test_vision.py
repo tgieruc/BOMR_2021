@@ -1,9 +1,11 @@
 import sys as _sys
-import cv2
-_sys.path.append(".")
+_sys.path.append("../")
+
+from vision import Vision
 import matplotlib.pyplot as plt
-from vision import *
-vision = Vision()
+vision = Vision("example.png")
+
+
 
 vision.update()
 
