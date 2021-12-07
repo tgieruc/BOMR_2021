@@ -33,7 +33,7 @@ class Kalman_filter():
         else:
             self.state = "camera_not_on"
         self.rho = np.sqrt(self.pos_x ** 2 + self.pos_y ** 2)
-        self.speed = self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
+        self.speed = vision.mm2px * self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
 
     def update_kalman(self, vision, robot_speed):
         self.update_value(vision, robot_speed)

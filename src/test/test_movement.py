@@ -5,6 +5,7 @@ import numpy as np
 
 from movement import *
 
-pos_prev = np.array([239,410    ,1.3644724327651792])
-position_goal = np.array([304,266])
-move(pos_prev, position_goal)
+pos_prev = np.array([0, 0, 0])
+position_goal = np.array([200, 0])
+speed = move(pos_prev, position_goal, 0.261799)
+print(speed)
