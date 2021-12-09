@@ -56,6 +56,9 @@ class Kalman_filter():
         else:
             """kalman avec uniquement les vitesses"""
             K = 0
+            self.pos_x = int(self.rho_est[0])
+            self.pos_y = int(self.rho_est[1])
+            self.theta = int(self.rho_est[2])
 
         y = np.array([[self.pos_x], [self.pos_y], [self.theta]])
         i = y - np.dot(self.C, rho_est_a_priori)
