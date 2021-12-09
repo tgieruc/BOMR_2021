@@ -8,7 +8,7 @@ def move(vision, pos_prev, position_goal, min_angle, k_rho, k_alpha,k_rot, is_ne
     length_robot = 50 * vision.mm2px
     dpos = position_goal - pos_prev[0:2]
     rho = np.linalg.norm(dpos)
-    alpha = -pos_prev[2] + np.arctan2(dpos[1,1], dpos[0,0])
+    alpha = -pos_prev[2] + np.arctan2(dpos[1], dpos[0])
     alpha = (alpha + np.pi )% (2*np.pi) - np.pi
     beta = -pos_prev[2] - alpha
     beta =  (beta + np.pi )% (2*np.pi) - np.pi
