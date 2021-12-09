@@ -9,4 +9,5 @@ vision.update()
 robot_speed = [100, -100]
 kalman = Kalman_filter(vision)
 kalman.update_kalman(vision, robot_speed, 0.1)
-print(kalman.rho_est[0])
+print(kalman.rho_est)
+print(vision.robot.center, vision.robot.orientation)
