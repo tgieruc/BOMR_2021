@@ -30,7 +30,7 @@ class Kalman_filter():
     def update_values(self, vision, robot_speed, time):
         self.time = time
         self.v = vision.mm2px * self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
-        self.w = self.thymio_to_mm_speed * (robot_speed[0] - robot_speed[1]) / 50
+        self.w = self.thymio_to_mm_speed * (robot_speed[0] - robot_speed[1]) / 100
         self.u = np.array([self.v, self.w])
         self.alpha = self.time * self.w
         self.B = np.array([[self.time * np.cos(self.alpha + self.rho_est[2]), 0], [self.time * np.sin(self.alpha + self.rho_est[2]), 0], [0, self.time]])
