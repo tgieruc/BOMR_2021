@@ -1,4 +1,4 @@
-from vision import Vision
+
 import numpy as np
 
 
@@ -14,8 +14,8 @@ class Kalman_filter():
         self.thymio_to_mm_speed = 0.435                 #"""taken from exercise 8"""
         self.rho_est = np.array([[self.pos_x], [self.pos_y], [self.theta]])
         self.R = np.array([[0.1, 0, 0], [0, 0.1, 0], [0, 0, 0.01]])
-        self.q1 = 0.5
-        self.q2 = 0.5
+        self.q1 = 1
+        self.q2 = 1
         self.q3 = 0.1
         self.v = 0
         self.w = 0
@@ -29,10 +29,10 @@ class Kalman_filter():
 
     def update_values(self, vision, robot_speed, time):
         self.time = time
-        self.v = self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
-        self.w = self.thymio_to_mm_speed * (robot_speed[0] - robot_speed[1]) / 2
+        self.v = vision.mm2px * self.thymio_to_mm_speed * (robot_speed[0] + robot_speed[1]) / 2
+        self.w = vision.mm2px * self.thymio_to_mm_speed * (robot_speed[0] - robot_speed[1]) / 2
         self.u = np.array([[self.v], [self.w]])
-        self.alpha = self.time * self.w / 2
+        self.alpha = self.time * self.w / 2000
         self.B = np.array([[self.time * np.cos(self.alpha), 0], [self.time * np.sin(self.alpha), 0], [0, self.time]])
 
     def update_kalman(self, vision, robot_speed, time):
@@ -61,4 +61,5 @@ class Kalman_filter():
         i = y - np.dot(self.C, rho_est_a_priori)
         print(np.dot(K, i).shape)
         self.rho_est = rho_est_a_priori + np.dot(K, i)
+        self.rho_est[2] = (self.rho_est[2] + np.pi) % (2 * np.pi) - np.pi
         self.P_est = np.dot((np.identity(3) - np.dot(K, self.C)), p_est_a_priori)
