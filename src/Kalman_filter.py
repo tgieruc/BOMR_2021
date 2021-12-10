@@ -15,12 +15,6 @@ class Kalman_filter():
         self.q1 = 1
         self.q2 = 1
         self.q3 = 0.1
-        # self.time = 0.01
-        # self.v = 0
-        # self.w = 0
-        # self.alpha = self.time * self.w
-        # self.B = np.array([[self.time * np.cos(self.alpha + self.theta), 0], [self.time * np.sin(self.alpha + self.theta), 0], [0, self.time]])
-        # self.u = np.array([self.v, self.w])
         self.Q = np.array([[self.q1, 0, 0], [0, self.q2, 0], [0, 0, self.q3]])
         self.A = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         self.C = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
