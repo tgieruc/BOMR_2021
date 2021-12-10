@@ -1,7 +1,5 @@
-import sys as _sys
 import numpy as np
 import math as _math
-from dataclasses import dataclass
 import cv2
 
 from sympy import Point, Polygon, Line
@@ -28,22 +26,22 @@ class Path_planner():
     def make_path(self, vision):
         obstacle = vision.obstacles.expanded_contour
         robot_start = vision.robot.center.astype(int)[0]
-        robot_goal = vision.goal.center.astype(int)[0]
+        robot_target = vision.target.center.astype(int)[0]
 
-        distance, start_dijk, goal_dijk, contours_obstacles = self.create_path(obstacle, robot_start,
-                                                                               robot_goal)
+        if len(obstacle) == 0:
+            self.path = [robot_start, robot_target]
+        else :
+            distance, start_dijk, target_dijk, contours_obstacles = self.create_path(obstacle, robot_start, robot_target)
 
-        self.path = self.execution_dijk(distance, start_dijk, goal_dijk, robot_start, robot_goal,
-                                        obstacle)
+            self.path = self.execution_dijk(distance, start_dijk, target_dijk, robot_start, robot_target, obstacle)
 
-    def create_path(self, obstacle, robot_start, robot_goal):
-        start_chemin = []
-        goal_chemin = []
+    def create_path(self, obstacle, robot_start, robot_target):
+        start_path = []
+        target_path = []
         distance = []
-        # marge = 0
         nom_dijk = ['S', 'G']
         start_dijk = []
-        goal_dijk = []
+        target_dijk = []
         contours_obstacles = []
 
         for i in range(len(obstacle)):  # parcours tous les obstacles
@@ -54,18 +52,18 @@ class Path_planner():
                     contours_obstacles.append([obstacle[i][j], obstacle[i][j + 1]])
                     distance.append(_math.dist(obstacle[i][j], obstacle[i][j + 1]))
                     start_dijk.append(j * len(obstacle) + i)
-                    goal_dijk.append((j + 1) * len(obstacle) + i)
+                    target_dijk.append((j + 1) * len(obstacle) + i)
                     distance.append(_math.dist(obstacle[i][j + 1], obstacle[i][j]))
                     start_dijk.append((j + 1) * len(obstacle) + i)
-                    goal_dijk.append(j * len(obstacle) + i)
+                    target_dijk.append(j * len(obstacle) + i)
                 else:
                     contours_obstacles.append([obstacle[i][j], obstacle[i][0]])
                     distance.append(_math.dist(obstacle[i][j], obstacle[i][0]))
                     start_dijk.append(j * len(obstacle) + i)
-                    goal_dijk.append(i)
+                    target_dijk.append(i)
                     distance.append(_math.dist(obstacle[i][0], obstacle[i][j]))
                     start_dijk.append(i)
-                    goal_dijk.append(j * len(obstacle) + i)
+                    target_dijk.append(j * len(obstacle) + i)
 
         pt_obstacle = []
         poly = []
@@ -82,8 +80,8 @@ class Path_planner():
                     # print(obstacle[i])
                     for l in range(len(obstacle[k + i + 1])):  # parcours tous les angles
 
-                        start_tmp, goal_tmp = map(Point, [obstacle[i][j], obstacle[k + i + 1][l]])
-                        path = Line(start_tmp, goal_tmp)
+                        start_tmp, target_tmp = map(Point, [obstacle[i][j], obstacle[k + i + 1][l]])
+                        path = Line(start_tmp, target_tmp)
 
                         maxIntersection = 0
                         intersection = 0
@@ -94,29 +92,29 @@ class Path_planner():
                             intersection = len(isIntersection)
 
                             for n in range(len(isIntersection)):
-                                if (start_tmp[0] > isIntersection[n][0] < goal_tmp[0] or start_tmp[0] <
+                                if (start_tmp[0] > isIntersection[n][0] < target_tmp[0] or start_tmp[0] <
                                         isIntersection[n][0] >
-                                        goal_tmp[0]):
+                                        target_tmp[0]):
                                     intersection = intersection - 1
 
                             if intersection > maxIntersection:
                                 maxIntersection = intersection
 
                         if maxIntersection == 1:
-                            start_chemin.append(obstacle[i][j])
-                            goal_chemin.append(obstacle[k + i + 1][l])
+                            start_path.append(obstacle[i][j])
+                            target_path.append(obstacle[k + i + 1][l])
 
                             distance.append(_math.dist(obstacle[i][j], obstacle[k + i + 1][l]))
                             start_dijk.append(j * len(obstacle) + i)
-                            goal_dijk.append(l * len(obstacle) + (k + i + 1))
+                            target_dijk.append(l * len(obstacle) + (k + i + 1))
                             distance.append(_math.dist(obstacle[i][j], obstacle[k + i + 1][l]))
                             start_dijk.append(l * len(obstacle) + (k + i + 1))
-                            goal_dijk.append(j * len(obstacle) + i)
+                            target_dijk.append(j * len(obstacle) + i)
 
                 # lien obstacles robot
 
-                start_tmp, goal_tmp = map(Point, [obstacle[i][j], robot_start])
-                path = Line(start_tmp, goal_tmp)
+                start_tmp, target_tmp = map(Point, [obstacle[i][j], robot_start])
+                path = Line(start_tmp, target_tmp)
 
                 maxIntersection = 0
                 intersection = 0
@@ -127,25 +125,25 @@ class Path_planner():
                     intersection = len(isIntersection)
 
                     for n in range(len(isIntersection)):
-                        if (start_tmp[0] > isIntersection[n][0] < goal_tmp[0] or start_tmp[0] < isIntersection[n][0] >
-                                goal_tmp[0]):
+                        if (start_tmp[0] > isIntersection[n][0] < target_tmp[0] or start_tmp[0] < isIntersection[n][0] >
+                                target_tmp[0]):
                             intersection = intersection - 1
 
                     if intersection > maxIntersection:
                         maxIntersection = intersection
 
                 if maxIntersection == 1:
-                    start_chemin.append(obstacle[i][j])
-                    goal_chemin.append(robot_start)
-                    distance.append(_math.dist(start_chemin[-1], goal_chemin[-1]))
+                    start_path.append(obstacle[i][j])
+                    target_path.append(robot_start)
+                    distance.append(_math.dist(start_path[-1], target_path[-1]))
 
                     start_dijk.append('S')
-                    goal_dijk.append(j * len(obstacle) + i)
+                    target_dijk.append(j * len(obstacle) + i)
 
-                # lien goal obstacles
+                # lien target obstacles
 
-                start_tmp, goal_tmp = map(Point, [obstacle[i][j], robot_goal])
-                path = Line(start_tmp, goal_tmp)
+                start_tmp, target_tmp = map(Point, [obstacle[i][j], robot_target])
+                path = Line(start_tmp, target_tmp)
 
                 maxIntersection = 0
                 intersection = 0
@@ -156,66 +154,59 @@ class Path_planner():
                     intersection = len(isIntersection)
 
                     for n in range(len(isIntersection)):
-                        if (start_tmp[0] > isIntersection[n][0] < goal_tmp[0] or start_tmp[0] < isIntersection[n][0] >
-                                goal_tmp[0]):
+                        if (start_tmp[0] > isIntersection[n][0] < target_tmp[0] or start_tmp[0] < isIntersection[n][0] >
+                                target_tmp[0]):
                             intersection = intersection - 1
 
                     if intersection > maxIntersection:
                         maxIntersection = intersection
 
                 if maxIntersection == 1:
-                    start_chemin.append(obstacle[i][j])
-                    goal_chemin.append(robot_goal)
-                    distance.append(_math.dist(start_chemin[-1], goal_chemin[-1]))
+                    start_path.append(obstacle[i][j])
+                    target_path.append(robot_target)
+                    distance.append(_math.dist(start_path[-1], target_path[-1]))
 
                     start_dijk.append(j * len(obstacle) + i)
-                    goal_dijk.append('G')
+                    target_dijk.append('G')
 
-                # lien robot goal
+                # lien robot target
 
-                start_tmp, goal_tmp = map(Point, [robot_start, robot_goal])
-                path = Line(start_tmp, goal_tmp)
+                start_tmp, target_tmp = map(Point, [robot_start, robot_target])
+                path = Line(start_tmp, target_tmp)
 
                 maxIntersection = 0
                 intersection = 0
 
-                for m in range(len(obstacle)):
-                    isIntersection = poly[m].intersection(path)
+        for m in range(len(obstacle)):
+            isIntersection = poly[m].intersection(path)
 
-                    intersection = len(isIntersection)
+            intersection = len(isIntersection)
 
-                    for n in range(len(isIntersection)):
-                        if (start_tmp[0] > isIntersection[n][0] < goal_tmp[0] or start_tmp[0] < isIntersection[n][0] >
-                                goal_tmp[0]):
-                            intersection = intersection - 1
+            for n in range(len(isIntersection)):
+                if (start_tmp[0] > isIntersection[n][0] < target_tmp[0] or start_tmp[0] < isIntersection[n][0] >
+                        target_tmp[0]):
+                    intersection = intersection - 1
 
-                    if intersection > maxIntersection:
-                        maxIntersection = intersection
+            if intersection > maxIntersection:
+                maxIntersection = intersection
 
-                if maxIntersection == 0:
-                    start_chemin.append(robot_start)
-                    goal_chemin.append(robot_goal)
-                    distance.append(_math.dist(start_chemin[-1], goal_chemin[-1]))
+        if maxIntersection == 0:
+            start_path.append(robot_start)
+            target_path.append(robot_target)
+            distance.append(_math.dist(start_path[-1], target_path[-1]))
 
-                    start_dijk.append('S')
-                    goal_dijk.append('G')
+            start_dijk.append('S')
+            target_dijk.append('G')
 
-        return distance, start_dijk, goal_dijk, contours_obstacles
+        return distance, start_dijk, target_dijk, contours_obstacles
 
-    # recherche du chemin
-
-    # graph = Graph()
-    # graph.add_edge(1, 2, 110)
-    # graph.add_edge(2, 3, 125)
-    # graph.add_edge(3, 4, 108)
-    # find_path(graph, 1, 4)
-
-    def execution_dijk(self, distance, start_dijk, goal_dijk, robot_start, robot_goal, obstacle):
+    def execution_dijk(self, distance, start_dijk, target_dijk, robot_start, robot_target, obstacle):
+        '''path searching'''
 
         graph = Graph()
 
         for i in range(len(distance)):
-            graph.add_edge(start_dijk[i], goal_dijk[i], distance[i])
+            graph.add_edge(start_dijk[i], target_dijk[i], distance[i])
 
         resultat = find_path(graph, 'S', 'G')
 
@@ -224,14 +215,11 @@ class Path_planner():
         for i in range(len(resultat.nodes)):
             if resultat.nodes[i] == 'S':
                 resultat_coor.append(robot_start)
-                # print('resultats', resultat.nodes[i], resultat_coor[i])
             elif resultat.nodes[i] == 'G':
-                resultat_coor.append(robot_goal)
-                # print('resultats',resultat.nodes[i],resultat_coor[i])
+                resultat_coor.append(robot_target)
             else:
                 reste = int(resultat.nodes[i] % len(obstacle))
                 resultat_coor.append(obstacle[reste][int((resultat.nodes[i] - reste) / len(obstacle))])
-                # print('resultats',resultat.nodes[i],resultat_coor[i])
 
         return resultat_coor
 
