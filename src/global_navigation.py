@@ -5,10 +5,6 @@ import cv2
 from sympy import Point, Polygon, Line
 from dijkstar import Graph, find_path
 
-import matplotlib.pyplot as plt
-
-from vision import Vision
-
 
 class Path_planner():
     def __init__(self):
@@ -44,10 +40,9 @@ class Path_planner():
         target_dijk = []
         contours_obstacles = []
 
-        for i in range(len(obstacle)):  # parcours tous les obstacles
-            for j in range(len(obstacle[i])):  # parcours tous les angles
+        for i in range(len(obstacle)):  # go through all the obstacles
+            for j in range(len(obstacle[i])):  # go through all the angles
                 nom_dijk.append(j * len(obstacle) + i)
-                # print(i, ',', j, ',', j*len(obstacle)+i, obstacle[i][j])
                 if j < len(obstacle[i]) - 1:
                     contours_obstacles.append([obstacle[i][j], obstacle[i][j + 1]])
                     distance.append(_math.dist(obstacle[i][j], obstacle[i][j + 1]))
@@ -72,13 +67,10 @@ class Path_planner():
             pt_obstacle.append(list(map(Point, obstacle[i])))
             poly.append(Polygon(*pt_obstacle[i]))
 
-        for i in range(len(obstacle)):  # parcours tous les obstacles
-            # print(obstacle[i])
-            for j in range(len(obstacle[i])):  # parcours tous les angles
-                # print(obstacle[i][j])
-                for k in range(len(obstacle) - i - 1):  # parcours tous les obstacles plus loin dans la liste
-                    # print(obstacle[i])
-                    for l in range(len(obstacle[k + i + 1])):  # parcours tous les angles
+        for i in range(len(obstacle)):  # go through all the obstacles
+            for j in range(len(obstacle[i])):  # go through all the angles
+                for k in range(len(obstacle) - i - 1):  # go through all the next obstacles in the list
+                    for l in range(len(obstacle[k + i + 1])):  # go through all the angles
 
                         start_tmp, target_tmp = map(Point, [obstacle[i][j], obstacle[k + i + 1][l]])
                         path = Line(start_tmp, target_tmp)
@@ -111,7 +103,7 @@ class Path_planner():
                             start_dijk.append(l * len(obstacle) + (k + i + 1))
                             target_dijk.append(j * len(obstacle) + i)
 
-                # lien obstacles robot
+                # Links obstacles robot
 
                 start_tmp, target_tmp = map(Point, [obstacle[i][j], robot_start])
                 path = Line(start_tmp, target_tmp)
@@ -140,7 +132,7 @@ class Path_planner():
                     start_dijk.append('S')
                     target_dijk.append(j * len(obstacle) + i)
 
-                # lien target obstacles
+                # Links target obstacles
 
                 start_tmp, target_tmp = map(Point, [obstacle[i][j], robot_target])
                 path = Line(start_tmp, target_tmp)
