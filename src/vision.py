@@ -169,8 +169,7 @@ class Obstacles():
             img = 255 * np.ones_like(actual_frame[:, :, 0])
 
             for contour in self.expanded_contour:
-                convexHull = cv2.convexHull(contour)
-                cv2.drawContours(img, [convexHull], -1, 0, 2)
+                cv2.drawContours(img, [cv2.convexHull(contour)], 0, 0, thickness=cv2.FILLED)
             self.expanded_contour = polygon_detection(img.astype(np.uint8), 400, 0.9 * actual_frame.shape[0] *
                                                       actual_frame.shape[1])
 
@@ -271,7 +270,7 @@ def create_mask(contours, img_mask, color):
     return img_mask
 
 
-def polygon_detection(threshold, min_area, max_area):
+def polygon_detection(img, min_area, max_area):
     """
     This method creates a list of contours
 
@@ -283,7 +282,7 @@ def polygon_detection(threshold, min_area, max_area):
     Output:
     - the list of contours
     """
-    contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     approx_array = []
 
     for cnt in contours:
