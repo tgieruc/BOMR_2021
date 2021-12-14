@@ -1,7 +1,8 @@
-# BOMR_2021
+# Project BOMR
 
-[notion.so](https://www.notion.so/Projet-BOMR-2021-0fd6024433b540c783596cfbdfffaf9d)
+This project takes part in the course Basics of Mobile Robotics at EPFL.
 
-[gdrive](https://drive.google.com/drive/u/1/folders/0ACw6LpB6aE8YUk9PVA)
+The Thymio has to reach the target, while avoiding the obstacles. We use visbility graph and Dijkstra for path planning, Kalman for filtering and ANN coupled with a Braitenberg approach for local navigation.
 
-[whimiscal](https://whimsical.com/bomr-2021-6ChiZ5QzDP19UoEmQcS85T)
+## Video demo
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GfBVOo9yZ0U/0.jpg)](https://www.youtube.com/watch?v=GfBVOo9yZ0U)
